@@ -7,31 +7,35 @@ using Vector3 = UnityEngine.Vector3;
 public class Balle : MonoBehaviour
 {
     private Vector3 currentSpeed;
-    private GameObject[] cubeList;
+    
+    private List<GameObject> totalList;
 
     // Start is called before the first frame update
     void Start()
     {
         currentSpeed = new Vector3(0f,0f,-20f);
         transform.position += currentSpeed * Time.deltaTime;
-        cubeList = GameObject.FindGameObjectsWithTag("Cube");
+
+        GameObject[] cubeList = GameObject.FindGameObjectsWithTag("Cube");
+
         GameObject[] pinList = GameObject.FindGameObjectsWithTag("Pin");
-        foreach (var pin in pinList)
-        {
-            cubeList[cubeList.Length] = pin;
-        }
+
+        totalList = new List<GameObject>();
+
+        totalList.AddRange(cubeList);
+        totalList.AddRange(pinList);
+
     }
 
     // Update is called once per frame
     void Update()
     {
         CalculGravityVector();
-        foreach (var cube in cubeList)
+        foreach (var cube in totalList)
         {
             int surfaceCollision = DetectCollision(transform.position, cube);
             if (surfaceCollision != 0) // Collision ?
             {
-                Debug.Log("surfaceCollision: " + surfaceCollision);
                 if (surfaceCollision == 1) Rebond(Vector3.Normalize(cube.transform.right));
                 if (surfaceCollision == 2) Rebond(Vector3.Normalize(cube.transform.up));
                 if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward));
