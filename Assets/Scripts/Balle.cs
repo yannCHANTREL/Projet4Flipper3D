@@ -8,7 +8,8 @@ public class Balle : MonoBehaviour
 {
     private Vector3 currentSpeed;
     
-    private List<GameObject> totalList;
+    private List<GameObject> totalCubeList;
+    private List<GameObject> totalCylinderList;
 
     // Start is called before the first frame update
     void Start()
@@ -17,23 +18,26 @@ public class Balle : MonoBehaviour
         transform.position += currentSpeed * Time.deltaTime;
 
         GameObject[] cubeList = GameObject.FindGameObjectsWithTag("Cube");
-
         GameObject[] pinList = GameObject.FindGameObjectsWithTag("Pin");
-
-        totalList = new List<GameObject>();
-
-        totalList.AddRange(cubeList);
-        totalList.AddRange(pinList);
-
+        
+        totalCubeList = new List<GameObject>();
+        totalCubeList.AddRange(cubeList);
+        totalCubeList.AddRange(pinList);
+        
+        GameObject[] cylinderList = GameObject.FindGameObjectsWithTag("Cylinder");
+        
+        totalCylinderList = new List<GameObject>();
+        totalCylinderList.AddRange(cylinderList);
     }
 
     // Update is called once per frame
     void Update()
     {
         CalculGravityVector();
-        foreach (var cube in totalList)
+        
+        foreach (var cube in totalCubeList)
         {
-            int surfaceCollision = DetectCollision(transform.position, cube);
+            int surfaceCollision = CubeDetectCollision(transform.position, cube);
             if (surfaceCollision != 0) // Collision ?
             {
                 if (surfaceCollision == 1) Rebond(Vector3.Normalize(cube.transform.right));
@@ -41,9 +45,21 @@ public class Balle : MonoBehaviour
                 if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward));
             }
         }
+        
+        foreach (var cylinder in totalCylinderList)
+        {
+            Vector3 normal;
+            bool surfaceCollision = CylinderDetectCollision(transform.position, cylinder, out normal);
+            if (surfaceCollision) // Collision ?
+            {
+                Rebond(Vector3.Normalize(normal));
+            }
+        }
+
+        PrintScore();
     }
     
-    int DetectCollision(Vector3 currentPos, GameObject cube)
+    int CubeDetectCollision(Vector3 currentPos, GameObject cube)
     {
         // initialisation value
         float rayonBalle = transform.localScale.x / 2;
@@ -80,6 +96,32 @@ public class Balle : MonoBehaviour
         }
         return 0;
     }
+    
+    bool CylinderDetectCollision(Vector3 currentPos, GameObject cylinder, out Vector3 normal)
+    {
+        // initialisation value
+        float distanceBeforeTouch = transform.localScale.x / 2 + cylinder.transform.localScale.x / 2;
+
+        // verification collision
+        Vector3 futurPos = currentPos;
+        futurPos += currentSpeed * Time.deltaTime;
+        Vector3 diffPosFutur = new Vector3(currentPos.x - futurPos.x, currentPos.y - futurPos.y, currentPos.z - futurPos.z) / 100;
+        for (int i = 0; i < 100; i++)
+        {
+            // simulate move
+            futurPos += diffPosFutur;
+            
+            // calcul projection
+            Vector3 diffPos = futurPos - cylinder.transform.position;
+            Vector3 diffOnCylinder = Vector3.Project(diffPos, cylinder.transform.up);
+            normal = diffOnCylinder - diffPos;
+
+            // collision ?
+            if (normal.magnitude < distanceBeforeTouch) return true;
+        }
+        normal = Vector3.zero;
+        return false;
+    }
 
     void Rebond(Vector3 normal)
     {
@@ -93,5 +135,10 @@ public class Balle : MonoBehaviour
         Vector3 gravityVector = new Vector3(0.0f,-9.81f,0.0f);
         currentSpeed += gravityVector * Time.deltaTime;
         transform.position += currentSpeed * Time.deltaTime;
+    }
+    
+    void PrintScore()
+    {
+        
     }
 }
