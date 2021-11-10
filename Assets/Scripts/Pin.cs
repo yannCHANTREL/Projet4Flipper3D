@@ -26,6 +26,13 @@ public class Pin : MonoBehaviour
         _targetAnglePos = 25;
         _restAngleNeg = -30;
         _restAnglePos = 30;
+
+        Balle.onPinCollisionDelegate += PinCollided;
+    }
+
+    void PinCollided()
+    {
+        Debug.Log("Pin Collided !");
     }
 
     // Update is called once per frame

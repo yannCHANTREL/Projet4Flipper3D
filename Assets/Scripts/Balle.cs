@@ -10,7 +10,15 @@ public class Balle : MonoBehaviour
     
     private List<GameObject> totalCubeList;
     private List<GameObject> totalCylinderList;
+    
+    //DELEGATE TESTING
+    public delegate void OnPinCollisionDelegate();
+    public static event OnPinCollisionDelegate onPinCollisionDelegate;
 
+    public void OnPinCollision()
+    {
+        onPinCollisionDelegate();
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -40,6 +48,10 @@ public class Balle : MonoBehaviour
             int surfaceCollision = CubeDetectCollision(transform.position, cube);
             if (surfaceCollision != 0) // Collision ?
             {
+                if (cube.tag.Equals("Pin"))
+                {
+                    OnPinCollision();
+                }
                 if (surfaceCollision == 1) Rebond(Vector3.Normalize(cube.transform.right));
                 if (surfaceCollision == 2) Rebond(Vector3.Normalize(cube.transform.up));
                 if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward));
@@ -120,6 +132,7 @@ public class Balle : MonoBehaviour
             if (normal.magnitude < distanceBeforeTouch) return true;
         }
         normal = Vector3.zero;
+
         return false;
     }
 
