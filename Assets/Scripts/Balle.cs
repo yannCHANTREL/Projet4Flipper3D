@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
@@ -20,7 +21,7 @@ public class Balle : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        currentSpeed = new Vector3(0f,0f,-15f);
+        currentSpeed = new Vector3(0f,0f,-20f);
         transform.position += currentSpeed * Time.deltaTime;
 
         GameObject[] cubeNotScore = GameObject.FindGameObjectsWithTag("CubeNotScore");
@@ -41,7 +42,7 @@ public class Balle : MonoBehaviour
         _countText = GameObject.FindGameObjectWithTag("Score").GetComponent<Text>();
         PrintScore();
 
-        _speedMax = 30;
+        _speedMax = 20;
     }
 
     // Update is called once per frame
@@ -56,15 +57,11 @@ public class Balle : MonoBehaviour
             {
                 // Update score
                 if (!cube.tag.Equals("CubeNotScore") && !cube.tag.Equals("Pin")) _score += 5;
-                
-                // Update coefficient acceleration
-                float coefficient = 0.9f;
-                if (cube.tag.Equals("Pin")) coefficient = 1f;
-                
+
                 // Rebond
-                if (surfaceCollision == 1) Rebond(Vector3.Normalize(cube.transform.right), coefficient);
-                if (surfaceCollision == 2) Rebond(Vector3.Normalize(cube.transform.up), coefficient);
-                if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward), coefficient);
+                if (surfaceCollision == 1) Rebond(Vector3.Normalize(cube.transform.right), cube);
+                if (surfaceCollision == 2) Rebond(Vector3.Normalize(cube.transform.up), cube);
+                if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward), cube);
             }
         }
         
@@ -75,7 +72,7 @@ public class Balle : MonoBehaviour
             if (surfaceCollision) // Collision ?
             {
                 _score += 20;
-                Rebond(Vector3.Normalize(normal), 1.2f);
+                Rebond(Vector3.Normalize(normal), cylinder);
             }
         }
 
@@ -146,11 +143,14 @@ public class Balle : MonoBehaviour
         return false;
     }
 
-    void Rebond(Vector3 normal, float coefficient)
+    void Rebond(Vector3 normal, GameObject obj)
     {
         Vector3 perpendicular = Vector3.Project(currentSpeed, normal);
         
-        Vector3 temp = currentSpeed - (2 * perpendicular) * coefficient;
+        float addMovement = 1f;
+        if (obj.tag.Equals("Pin") || obj.tag.Equals("Cylinder")) addMovement = 1.1f;
+
+        Vector3 temp = currentSpeed - (2 * perpendicular) * addMovement;
         if (temp.magnitude < _speedMax)
         {
             currentSpeed = temp;
