@@ -8,7 +8,7 @@ TagManager:
   - Pin
   - Cylinder
   - Score
-  - Sol
+  - CubeNotScore
   layers:
   - Default
   - TransparentFX

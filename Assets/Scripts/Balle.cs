@@ -15,18 +15,20 @@ public class Balle : MonoBehaviour
     private Text _countText;
     private int _score;
 
+    private float _speedMax;
+
     // Start is called before the first frame update
     void Start()
     {
-        currentSpeed = new Vector3(0f,0f,-20f);
+        currentSpeed = new Vector3(0f,0f,-15f);
         transform.position += currentSpeed * Time.deltaTime;
 
-        GameObject sol = GameObject.FindGameObjectWithTag("Sol");
+        GameObject[] cubeNotScore = GameObject.FindGameObjectsWithTag("CubeNotScore");
         GameObject[] cubeList = GameObject.FindGameObjectsWithTag("Cube");
         GameObject[] pinList = GameObject.FindGameObjectsWithTag("Pin");
         
         totalCubeList = new List<GameObject>();
-        totalCubeList.Add(sol);
+        totalCubeList.AddRange(cubeNotScore);
         totalCubeList.AddRange(cubeList);
         totalCubeList.AddRange(pinList);
         
@@ -38,6 +40,8 @@ public class Balle : MonoBehaviour
         _score = 0;
         _countText = GameObject.FindGameObjectWithTag("Score").GetComponent<Text>();
         PrintScore();
+
+        _speedMax = 30;
     }
 
     // Update is called once per frame
@@ -50,10 +54,17 @@ public class Balle : MonoBehaviour
             int surfaceCollision = CubeDetectCollision(transform.position, cube);
             if (surfaceCollision != 0) // Collision ?
             {
-                if (!cube.tag.Equals("Sol")) _score += 5;
-                if (surfaceCollision == 1) Rebond(Vector3.Normalize(cube.transform.right));
-                if (surfaceCollision == 2) Rebond(Vector3.Normalize(cube.transform.up));
-                if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward));
+                // Update score
+                if (!cube.tag.Equals("CubeNotScore") && !cube.tag.Equals("Pin")) _score += 5;
+                
+                // Update coefficient acceleration
+                float coefficient = 0.9f;
+                if (cube.tag.Equals("Pin")) coefficient = 1f;
+                
+                // Rebond
+                if (surfaceCollision == 1) Rebond(Vector3.Normalize(cube.transform.right), coefficient);
+                if (surfaceCollision == 2) Rebond(Vector3.Normalize(cube.transform.up), coefficient);
+                if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward), coefficient);
             }
         }
         
@@ -64,7 +75,7 @@ public class Balle : MonoBehaviour
             if (surfaceCollision) // Collision ?
             {
                 _score += 20;
-                Rebond(Vector3.Normalize(normal));
+                Rebond(Vector3.Normalize(normal), 1.2f);
             }
         }
 
@@ -135,10 +146,20 @@ public class Balle : MonoBehaviour
         return false;
     }
 
-    void Rebond(Vector3 normal)
+    void Rebond(Vector3 normal, float coefficient)
     {
         Vector3 perpendicular = Vector3.Project(currentSpeed, normal);
-        currentSpeed -= 2 * perpendicular;
+        
+        Vector3 temp = currentSpeed - (2 * perpendicular) * coefficient;
+        if (temp.magnitude < _speedMax)
+        {
+            currentSpeed = temp;
+        }
+        else
+        {
+            currentSpeed -= (2 * perpendicular);
+        }
+        Debug.Log(currentSpeed.magnitude);
         transform.position += currentSpeed * Time.deltaTime;
     }
     
