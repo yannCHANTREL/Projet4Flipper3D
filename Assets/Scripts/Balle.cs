@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using UnityEngine;
+using UnityEngine.UI;
 using Vector3 = UnityEngine.Vector3;
 
 public class Balle : MonoBehaviour
@@ -10,6 +11,9 @@ public class Balle : MonoBehaviour
     
     private List<GameObject> totalCubeList;
     private List<GameObject> totalCylinderList;
+    
+    private Text _countText;
+    private int _score;
 
     // Start is called before the first frame update
     void Start()
@@ -17,10 +21,12 @@ public class Balle : MonoBehaviour
         currentSpeed = new Vector3(0f,0f,-20f);
         transform.position += currentSpeed * Time.deltaTime;
 
+        GameObject sol = GameObject.FindGameObjectWithTag("Sol");
         GameObject[] cubeList = GameObject.FindGameObjectsWithTag("Cube");
         GameObject[] pinList = GameObject.FindGameObjectsWithTag("Pin");
         
         totalCubeList = new List<GameObject>();
+        totalCubeList.Add(sol);
         totalCubeList.AddRange(cubeList);
         totalCubeList.AddRange(pinList);
         
@@ -28,6 +34,10 @@ public class Balle : MonoBehaviour
         
         totalCylinderList = new List<GameObject>();
         totalCylinderList.AddRange(cylinderList);
+        
+        _score = 0;
+        _countText = GameObject.FindGameObjectWithTag("Score").GetComponent<Text>();
+        PrintScore();
     }
 
     // Update is called once per frame
@@ -40,6 +50,7 @@ public class Balle : MonoBehaviour
             int surfaceCollision = CubeDetectCollision(transform.position, cube);
             if (surfaceCollision != 0) // Collision ?
             {
+                if (!cube.tag.Equals("Sol")) _score += 5;
                 if (surfaceCollision == 1) Rebond(Vector3.Normalize(cube.transform.right));
                 if (surfaceCollision == 2) Rebond(Vector3.Normalize(cube.transform.up));
                 if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward));
@@ -52,6 +63,7 @@ public class Balle : MonoBehaviour
             bool surfaceCollision = CylinderDetectCollision(transform.position, cylinder, out normal);
             if (surfaceCollision) // Collision ?
             {
+                _score += 20;
                 Rebond(Vector3.Normalize(normal));
             }
         }
@@ -139,6 +151,6 @@ public class Balle : MonoBehaviour
     
     void PrintScore()
     {
-        
+        _countText.text = "Score: " + _score.ToString();
     }
 }
