@@ -17,6 +17,7 @@ public class Balle : MonoBehaviour
     private int _score;
 
     private float _speedMax;
+    private float _speedMin;
 
     // Start is called before the first frame update
     void Start()
@@ -27,11 +28,15 @@ public class Balle : MonoBehaviour
         GameObject[] cubeNotScore = GameObject.FindGameObjectsWithTag("CubeNotScore");
         GameObject[] cubeList = GameObject.FindGameObjectsWithTag("Cube");
         GameObject[] pinList = GameObject.FindGameObjectsWithTag("Pin");
+        GameObject[] tremplinList = GameObject.FindGameObjectsWithTag("Tremplin");
+        GameObject lanceur = GameObject.FindGameObjectWithTag("Lanceur");
         
         totalCubeList = new List<GameObject>();
         totalCubeList.AddRange(cubeNotScore);
         totalCubeList.AddRange(cubeList);
         totalCubeList.AddRange(pinList);
+        totalCubeList.AddRange(tremplinList);
+        totalCubeList.Add(lanceur);
         
         GameObject[] cylinderList = GameObject.FindGameObjectsWithTag("Cylinder");
         
@@ -43,6 +48,7 @@ public class Balle : MonoBehaviour
         PrintScore();
 
         _speedMax = 20;
+        _speedMin = 7;
     }
 
     // Update is called once per frame
@@ -92,8 +98,8 @@ public class Balle : MonoBehaviour
         // verification collision
         Vector3 futurPos = currentPos;
         futurPos += currentSpeed * Time.deltaTime;
-        Vector3 diffPosFutur = new Vector3(currentPos.x - futurPos.x, currentPos.y - futurPos.y, currentPos.z - futurPos.z) / 100;
-        for (int i = 0; i < 100; i++)
+        Vector3 diffPosFutur = new Vector3(currentPos.x - futurPos.x, currentPos.y - futurPos.y, currentPos.z - futurPos.z) / 200;
+        for (int i = 0; i < 200; i++)
         {
             // simulate move
             futurPos += diffPosFutur;
@@ -125,8 +131,8 @@ public class Balle : MonoBehaviour
         // verification collision
         Vector3 futurPos = currentPos;
         futurPos += currentSpeed * Time.deltaTime;
-        Vector3 diffPosFutur = new Vector3(currentPos.x - futurPos.x, currentPos.y - futurPos.y, currentPos.z - futurPos.z) / 100;
-        for (int i = 0; i < 100; i++)
+        Vector3 diffPosFutur = new Vector3(currentPos.x - futurPos.x, currentPos.y - futurPos.y, currentPos.z - futurPos.z) / 200;
+        for (int i = 0; i < 200; i++)
         {
             // simulate move
             futurPos += diffPosFutur;
@@ -145,22 +151,35 @@ public class Balle : MonoBehaviour
 
     void Rebond(Vector3 normal, GameObject obj)
     {
-        Vector3 perpendicular = Vector3.Project(currentSpeed, normal);
-        
-        float addMovement = 1f;
-        if (obj.tag.Equals("Pin") || obj.tag.Equals("Cylinder")) addMovement = 1.1f;
-
-        Vector3 temp = currentSpeed - (2 * perpendicular) * addMovement;
-        if (temp.magnitude < _speedMax)
+        if (obj.tag.Equals("Lanceur"))
         {
-            currentSpeed = temp;
+            currentSpeed = new Vector3(0f,0f,-20f);
+            transform.position += currentSpeed * Time.deltaTime;
+            _score += 495;
         }
         else
         {
-            currentSpeed -= (2 * perpendicular);
+            float addMovement = 0.95f;
+            if (obj.tag.Equals("Tremplin")) addMovement = 1f;
+            else if (obj.tag.Equals("Pin") || obj.tag.Equals("Cylinder")) addMovement = 1.1f;
+        
+            Vector3 perpendicular = Vector3.Project(currentSpeed, normal);
+            Vector3 parallel = currentSpeed - perpendicular;
+        
+            if (currentSpeed.magnitude * addMovement < _speedMax)
+            {
+                currentSpeed = parallel - addMovement * perpendicular;
+            }
+            else if (currentSpeed.magnitude < _speedMin && obj.tag.Equals("Pin"))
+            {
+                currentSpeed = parallel - 1.5f * perpendicular;
+            }
+            else
+            {
+                currentSpeed = parallel - perpendicular;
+            }
+            transform.position += currentSpeed * Time.deltaTime;
         }
-        Debug.Log(currentSpeed.magnitude);
-        transform.position += currentSpeed * Time.deltaTime;
     }
     
     void CalculGravityVector()

@@ -9,6 +9,8 @@ TagManager:
   - Cylinder
   - Score
   - CubeNotScore
+  - Lanceur
+  - Tremplin
   layers:
   - Default
   - TransparentFX
