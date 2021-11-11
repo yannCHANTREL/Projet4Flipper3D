@@ -4,14 +4,19 @@ using System.Collections.Generic;
 using System.Numerics;
 using UnityEngine;
 using UnityEngine.UI;
+using Plane = UnityEngine.Plane;
 using Vector3 = UnityEngine.Vector3;
 
-public class Balle : MonoBehaviour
+    public class Balle : MonoBehaviour
 {
-    private Vector3 currentSpeed;
     
-    private List<GameObject> totalCubeList;
-    private List<GameObject> totalCylinderList;
+    //singleton to access ball
+    public static Balle balleInstance { get; set; } = new Balle();
+    
+    private Vector3 _currentSpeed;
+    
+    public List<GameObject> totalCubeList;
+    private List<GameObject> _totalCylinderList;
     
     private Text _countText;
     private int _score;
@@ -22,8 +27,8 @@ public class Balle : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        currentSpeed = new Vector3(0f,0f,-20f);
-        transform.position += currentSpeed * Time.deltaTime;
+        _currentSpeed = new Vector3(0f,0f,-20f);
+        transform.position += _currentSpeed * Time.deltaTime;
 
         GameObject[] cubeNotScore = GameObject.FindGameObjectsWithTag("CubeNotScore");
         GameObject[] cubeList = GameObject.FindGameObjectsWithTag("Cube");
@@ -40,8 +45,8 @@ public class Balle : MonoBehaviour
         
         GameObject[] cylinderList = GameObject.FindGameObjectsWithTag("Cylinder");
         
-        totalCylinderList = new List<GameObject>();
-        totalCylinderList.AddRange(cylinderList);
+        _totalCylinderList = new List<GameObject>();
+        _totalCylinderList.AddRange(cylinderList);
         
         _score = 0;
         _countText = GameObject.FindGameObjectWithTag("Score").GetComponent<Text>();
@@ -55,7 +60,7 @@ public class Balle : MonoBehaviour
     void Update()
     {
         CalculGravityVector();
-        
+
         foreach (var cube in totalCubeList)
         {
             int surfaceCollision = CubeDetectCollision(transform.position, cube);
@@ -70,8 +75,8 @@ public class Balle : MonoBehaviour
                 if (surfaceCollision == 3) Rebond(Vector3.Normalize(cube.transform.forward), cube);
             }
         }
-        
-        foreach (var cylinder in totalCylinderList)
+
+        foreach (var cylinder in _totalCylinderList)
         {
             Vector3 normal;
             bool surfaceCollision = CylinderDetectCollision(transform.position, cylinder, out normal);
@@ -84,8 +89,8 @@ public class Balle : MonoBehaviour
 
         PrintScore();
     }
-    
-    int CubeDetectCollision(Vector3 currentPos, GameObject cube)
+
+    public int CubeDetectCollision(Vector3 currentPos, GameObject cube)
     {
         // initialisation value
         float rayonBalle = transform.localScale.x / 2;
@@ -97,7 +102,7 @@ public class Balle : MonoBehaviour
         
         // verification collision
         Vector3 futurPos = currentPos;
-        futurPos += currentSpeed * Time.deltaTime;
+        futurPos += _currentSpeed * Time.deltaTime;
         Vector3 diffPosFutur = new Vector3(currentPos.x - futurPos.x, currentPos.y - futurPos.y, currentPos.z - futurPos.z) / 200;
         for (int i = 0; i < 200; i++)
         {
@@ -130,9 +135,9 @@ public class Balle : MonoBehaviour
 
         // verification collision
         Vector3 futurPos = currentPos;
-        futurPos += currentSpeed * Time.deltaTime;
+        futurPos += _currentSpeed * Time.deltaTime;
         Vector3 diffPosFutur = new Vector3(currentPos.x - futurPos.x, currentPos.y - futurPos.y, currentPos.z - futurPos.z) / 200;
-        for (int i = 0; i < 200; i++)
+        for (int i = 0; i < 100; i++)
         {
             // simulate move
             futurPos += diffPosFutur;
@@ -149,44 +154,51 @@ public class Balle : MonoBehaviour
         return false;
     }
 
-    void Rebond(Vector3 normal, GameObject obj)
+    public void Rebond(Vector3 normal, GameObject obj)
     {
         if (obj.tag.Equals("Lanceur"))
         {
-            currentSpeed = new Vector3(0f,0f,-20f);
-            transform.position += currentSpeed * Time.deltaTime;
+            _currentSpeed = new Vector3(0f,0f,-20f);
+            transform.position += _currentSpeed * Time.deltaTime;
             _score += 495;
         }
         else
         {
             float addMovement = 0.95f;
             if (obj.tag.Equals("Tremplin")) addMovement = 1f;
-            else if (obj.tag.Equals("Pin") || obj.tag.Equals("Cylinder")) addMovement = 1.1f;
-        
-            Vector3 perpendicular = Vector3.Project(currentSpeed, normal);
-            Vector3 parallel = currentSpeed - perpendicular;
-        
-            if (currentSpeed.magnitude * addMovement < _speedMax)
+            else if (obj.tag.Equals("Pin") || obj.tag.Equals("Cylinder")) addMovement = 1.2f;
+
+            if (obj.tag.Equals("Pin"))
             {
-                currentSpeed = parallel - addMovement * perpendicular;
+                float _width = obj.transform.localScale.z / 2f;
+
+                transform.position -= new Vector3(0, 0, _width);
+
             }
-            else if (currentSpeed.magnitude < _speedMin && obj.tag.Equals("Pin"))
+            Vector3 perpendicular = Vector3.Project(_currentSpeed, normal);
+            Vector3 parallel = _currentSpeed - perpendicular;
+        
+            if (_currentSpeed.magnitude * addMovement < _speedMax)
             {
-                currentSpeed = parallel - 1.5f * perpendicular;
+                _currentSpeed = parallel - addMovement * perpendicular;
+            }
+            else if (_currentSpeed.magnitude < _speedMin && obj.tag.Equals("Pin"))
+            {
+                _currentSpeed = parallel - 1.5f * perpendicular;
             }
             else
             {
-                currentSpeed = parallel - perpendicular;
+                _currentSpeed = parallel - perpendicular;
             }
-            transform.position += currentSpeed * Time.deltaTime;
+            transform.position += _currentSpeed * Time.deltaTime;
         }
     }
     
     void CalculGravityVector()
     {
         Vector3 gravityVector = new Vector3(0.0f,-9.81f,0.0f);
-        currentSpeed += gravityVector * Time.deltaTime;
-        transform.position += currentSpeed * Time.deltaTime;
+        _currentSpeed += gravityVector * Time.deltaTime;
+        transform.position += _currentSpeed * Time.deltaTime;
     }
     
     void PrintScore()

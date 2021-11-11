@@ -11,6 +11,7 @@ TagManager:
   - CubeNotScore
   - Lanceur
   - Tremplin
+  - Balle
   layers:
   - Default
   - TransparentFX
